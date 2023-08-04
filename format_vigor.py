@@ -145,12 +145,12 @@ def format_database(src_folder : str) -> None:
 
 def preapare_dataset(dataset_name : str, src_folder : str) -> None:
     dataset_folder = os.path.join(os.curdir, "datasets_vg", "datasets", dataset_name)
-    os.makedirs(dataset_folder, exist_ok=True)
-    os.makedirs(src_folder, exist_ok=True)
-    #split_dataset(src_folder, dataset_folder, {"train": 0.7, "val": 0.15, "test": 0.15})
-    #split_dataset_small(src_folder, dataset_folder)
-    split_database_only(src_folder, dataset_folder, {"train": 0.7, "val": 0.15, "test": 0.15})
-    format_database(dataset_folder)
+    # os.makedirs(dataset_folder, exist_ok=True)
+    # os.makedirs(src_folder, exist_ok=True)
+    # #split_dataset(src_folder, dataset_folder, {"train": 0.7, "val": 0.15, "test": 0.15})
+    # #split_dataset_small(src_folder, dataset_folder)
+    # split_database_only(src_folder, dataset_folder, {"train": 0.7, "val": 0.15, "test": 0.15})
+    # format_database(dataset_folder)
     map_builder.build_map_from_dataset(dataset_folder)
     #shutil.rmtree(raw_data_folder)
 
