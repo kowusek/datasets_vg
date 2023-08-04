@@ -101,6 +101,44 @@ def split_database_only(src_folder : str, dst_folder : str, splits : dict) -> No
             dst_path = os.path.join(dst_folder, "images", choice, "queries", image)
         shutil.copy(os.path.join(src_path, image), dst_path)
 
+def split_database_only2(src_folder : str, dst_folder : str, splits : dict) -> None:
+    for dataset_type in splits:
+        os.makedirs(os.path.join(dst_folder, "images", dataset_type, "database"), exist_ok=True)
+        os.makedirs(os.path.join(dst_folder, "images", dataset_type, "queries"), exist_ok=True)
+    src_path = os.path.join(src_folder, "database")
+    min_lat = 90
+    max_lat = -90
+    for image in os.listdir(src_path):
+        lat = float(image.split('_')[1])
+        if lat < min_lat:
+            min_lat = lat
+        if lat > max_lat:
+            max_lat = lat
+    train_lat = min_lat + (max_lat - min_lat) * splits['train']
+    val_lat = min_lat + (max_lat - min_lat)  * splits['val']
+    for image in os.listdir(src_path):
+        lat = float(image.split('_')[1])
+        if np.random.choice(9, 1)[0] > 0:
+            if lat < train_lat:
+                dst_path = os.path.join(dst_folder, "images", "train", "database", image)
+                shutil.copy(os.path.join(src_path, image), dst_path)
+            if lat < val_lat:
+                dst_path = os.path.join(dst_folder, "images", "val", "database", image)
+                shutil.copy(os.path.join(src_path, image), dst_path)
+            if lat >= train_lat:
+                dst_path = os.path.join(dst_folder, "images", "test", "database", image)
+                shutil.copy(os.path.join(src_path, image), dst_path)
+        else:
+            if lat < train_lat:
+                dst_path = os.path.join(dst_folder, "images", "train", "queries", image)
+                shutil.copy(os.path.join(src_path, image), dst_path)
+            if lat < val_lat:
+                dst_path = os.path.join(dst_folder, "images", "val", "queries", image)
+                shutil.copy(os.path.join(src_path, image), dst_path)
+            if lat >= train_lat:
+                dst_path = os.path.join(dst_folder, "images", "test", "queries", image)
+                shutil.copy(os.path.join(src_path, image), dst_path)
+
 def split_queries_only(src_folder : str, dst_folder : str, splits : dict) -> None:
     for dataset_type in splits:
         os.makedirs(os.path.join(dst_folder, "images", dataset_type, "database"), exist_ok=True)
@@ -149,10 +187,10 @@ def preapare_dataset(dataset_name : str, src_folder : str) -> None:
     # os.makedirs(src_folder, exist_ok=True)
     # #split_dataset(src_folder, dataset_folder, {"train": 0.7, "val": 0.15, "test": 0.15})
     # #split_dataset_small(src_folder, dataset_folder)
-    # split_database_only(src_folder, dataset_folder, {"train": 0.7, "val": 0.15, "test": 0.15})
-    # format_database(dataset_folder)
+    split_database_only2(src_folder, dataset_folder, {"train": 0.7, "val": 0.15, "test": 0.15})
+    format_database(dataset_folder)
     map_builder.build_map_from_dataset(dataset_folder)
     #shutil.rmtree(raw_data_folder)
 
 if __name__ == "__main__":
-    preapare_dataset("VIGOR_DATABASE", "VIGOR/Chicago")
+    preapare_dataset("VIGOR_DATABASE2", "VIGOR/Chicago")
