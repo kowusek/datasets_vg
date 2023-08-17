@@ -59,49 +59,28 @@ def split_dataset_from_file(src_folder : str, dst_folder : str, splits : dict) -
     min_lat = min(lat_generator(os.path.join(src_folder, "database"), "database"))
     max_lat = max(lat_generator(os.path.join(src_folder, "database"), "database"))
     train_lat = min_lat + (max_lat - min_lat) * splits['train']
-    val_lat = min_lat + (max_lat - min_lat)  * splits['val']
+    val_lat = train_lat + (max_lat - min_lat) * splits['val']
     for (querie, positives) in tqdm(list(generate_queries_positives(split_file))):
         src_path = os.path.join(src_folder, "queries", querie)
         lat = float(src_path.split(split["queries"])[1])
         if lat < train_lat:
-            dst_image_name = format_image_name(querie, "queries")
-            dst_path = os.path.join(dst_folder, "images", "train", "queries", dst_image_name)
+            set_type = "train"
+        elif lat < val_lat:
+            set_type = "val"
+        else:
+            set_type = "test"
+        dst_image_name = format_image_name(querie, "queries")
+        dst_path = os.path.join(dst_folder, "images", set_type, "queries", dst_image_name)
+        shutil.copy(src_path, dst_path)
+        if os.path.splitext(querie)[1] == ".png": 
+                change_image_to_jpg(dst_path)
+        for positive in positives:
+            dst_image_name = format_image_name(positive, "database")
+            src_path = os.path.join(src_folder, "database", positive)
+            dst_path = os.path.join(dst_folder, "images", set_type, "database", dst_image_name)
             shutil.copy(src_path, dst_path)
-            if os.path.splitext(querie)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-            for positive in positives:
-                dst_image_name = format_image_name(positive, "database")
-                src_path = os.path.join(src_folder, "database", positive)
-                dst_path = os.path.join(dst_folder, "images", "train", "database", dst_image_name)
-                shutil.copy(src_path, dst_path)
-                if os.path.splitext(positive)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-        if lat >= train_lat:
-            dst_image_name = format_image_name(querie, "queries")
-            dst_path = os.path.join(dst_folder, "images", "test", "queries", dst_image_name)
-            shutil.copy(src_path, dst_path)
-            if os.path.splitext(querie)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-            for positive in positives:
-                dst_image_name = format_image_name(positive, "database")
-                src_path = os.path.join(src_folder, "database", positive)
-                dst_path = os.path.join(dst_folder, "images", "test", "database", dst_image_name)
-                shutil.copy(src_path, dst_path)
-                if os.path.splitext(positive)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-        if lat < val_lat:
-            dst_image_name = format_image_name(querie, "queries")
-            dst_path = os.path.join(dst_folder, "images", "val", "queries", dst_image_name)
-            shutil.copy(src_path, dst_path)
-            if os.path.splitext(querie)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-            for positive in positives:
-                dst_image_name = format_image_name(positive, "database")
-                src_path = os.path.join(src_folder, "database", positive)
-                dst_path = os.path.join(dst_folder, "images", "val", "database", dst_image_name)
-                shutil.copy(src_path, dst_path)
-                if os.path.splitext(positive)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
+            if os.path.splitext(positive)[1] == ".png": 
+                change_image_to_jpg(dst_path)
 
 def split_dataset(src_folder : str, dst_folder : str, splits : dict) -> None:
     split = {"queries" : ",", "database" : "_"}
@@ -111,7 +90,7 @@ def split_dataset(src_folder : str, dst_folder : str, splits : dict) -> None:
     min_lat = min(lat_generator(os.path.join(src_folder, "database"), "database"))
     max_lat = max(lat_generator(os.path.join(src_folder, "database"), "database"))
     train_lat = min_lat + (max_lat - min_lat) * splits['train']
-    val_lat = min_lat + (max_lat - min_lat)  * splits['val']
+    val_lat = train_lat + (max_lat - min_lat) * splits['val']
     print("Starting to copy images")
     for dataset in os.listdir(src_folder):
         if os.path.splitext(dataset)[1] == ".gz":
@@ -121,21 +100,15 @@ def split_dataset(src_folder : str, dst_folder : str, splits : dict) -> None:
             dst_image_name = format_image_name(image, dataset)
             lat = float(image.split(split[dataset])[1])
             if lat < train_lat:
-                dst_path = os.path.join(dst_folder, "images", "train", dataset, dst_image_name)
-                shutil.copy(os.path.join(dataset_folder, image), dst_path)
-                if os.path.splitext(image)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-            if lat >= train_lat:
-                dst_path = os.path.join(dst_folder, "images", "test", dataset, dst_image_name)
-                shutil.copy(os.path.join(dataset_folder, image), dst_path)
-                if os.path.splitext(image)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-            if lat < val_lat:
-                dst_path = os.path.join(dst_folder, "images", "val", dataset, dst_image_name)
-                shutil.copy(os.path.join(dataset_folder, image), dst_path)
-                if os.path.splitext(image)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-
+                set_type = "train"
+            elif lat < val_lat:
+                set_type = "val"
+            else:
+                set_type = "test"
+            dst_path = os.path.join(dst_folder, "images", set_type, dataset, dst_image_name)
+            shutil.copy(os.path.join(dataset_folder, image), dst_path)
+            if os.path.splitext(image)[1] == ".png": 
+                change_image_to_jpg(dst_path)
 
 def split_one_dataset_only(src_folder : str, dst_folder : str, dataset : str, splits : dict) -> None:
     split = {"queries" : ",", "database" : "_"}
@@ -146,43 +119,25 @@ def split_one_dataset_only(src_folder : str, dst_folder : str, dataset : str, sp
     min_lat = min(lat_generator(src_path, dataset))
     max_lat = max(lat_generator(src_path, dataset))
     train_lat = min_lat + (max_lat - min_lat) * splits['train']
-    val_lat = min_lat + (max_lat - min_lat)  * splits['val']
+    val_lat = train_lat + (max_lat - min_lat) * splits['val']
     print("Starting to copy images")
     for image in tqdm(os.listdir(src_path)):
         dst_image_name = format_image_name(image, dataset)
         lat = float(image.split(split[dataset])[1])
         if np.random.choice(5, 1)[0] > 0:
-            if lat < train_lat:
-                dst_path = os.path.join(dst_folder, "images", "train", "database", dst_image_name)
-                shutil.copy(os.path.join(src_path, image), dst_path)
-                if os.path.splitext(image)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-            if lat >= train_lat:
-                dst_path = os.path.join(dst_folder, "images", "test", "database", dst_image_name)
-                shutil.copy(os.path.join(src_path, image), dst_path)
-                if os.path.splitext(image)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-            if lat < val_lat:
-                dst_path = os.path.join(dst_folder, "images", "val", "database", dst_image_name)
-                shutil.copy(os.path.join(src_path, image), dst_path)
-                if os.path.splitext(image)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-        else: 
-            if lat < train_lat:
-                dst_path = os.path.join(dst_folder, "images", "train", "queries", dst_image_name)
-                shutil.copy(os.path.join(src_path, image), dst_path)
-                if os.path.splitext(image)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-            if lat >= train_lat:
-                dst_path = os.path.join(dst_folder, "images", "test", "queries", dst_image_name)
-                shutil.copy(os.path.join(src_path, image), dst_path)
-                if os.path.splitext(image)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
-            if lat < val_lat:
-                dst_path = os.path.join(dst_folder, "images", "val", "queries", dst_image_name)
-                shutil.copy(os.path.join(src_path, image), dst_path)
-                if os.path.splitext(image)[1] == ".png": 
-                    change_image_to_jpg(dst_path)
+            choice = "database"
+        else:
+            choice = "queries"
+        if lat < train_lat:
+            set_type = "train"
+        elif lat < val_lat:
+            set_type = "val"
+        else:
+            set_type = "test"
+        dst_path = os.path.join(dst_folder, "images", set_type, choice, dst_image_name)
+        shutil.copy(os.path.join(src_path, image), dst_path)
+        if os.path.splitext(image)[1] == ".png": 
+            change_image_to_jpg(dst_path)
 
 def unpack_data(src_folder : str, dst_folder : str, delete_archives : bool = False) -> None:
     for zip_folder, zip_name in find_all_archives(src_folder, ".gz"):
@@ -217,5 +172,6 @@ def preapare_dataset_from_file(src_folder : str, dataset_name : str) -> None:
 if __name__ == "__main__":
     # unpack_data(src_folder, src_folder)
     # preapare_one_dataset_only("VIGOR/Chicago", "VIGOR_QUERIES", "queries")
+    # preapare_one_dataset_only("VIGOR/Chicago", "VIGOR_DATABASE", "database")
     # preapare_dataset("VIGOR/Chicago", "VIGOR")
-    preapare_dataset_from_file("VIGOR/Chicago", "VIGOR_FILE")
+    preapare_dataset_from_file("VIGOR/Chicago", "VIGOR_FILE2")
